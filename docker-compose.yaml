@@ -1,0 +1,67 @@
+version: '3'
+services:
+  # docker run -d -p 27017:27017 --net mongo-net -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=password --name=mongodb -v mongo-data:/data/db mongo
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - mongo-net
+  # docker run -d -p 8081:8081 --net mongo-net -e ME_CONFIG_MONGODB_ADMINUSERNAME=root -e ME_CONFIG_MONGODB_ADMINPASSWORD=password -e ME_CONFIG_MONGODB_SERVER=mongodb --name=mongo-web mongo-express
+  mongo-web:
+    image: mongo-express
+    container_name: mongo-web
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    networks:
+      - mongo-net
+    depends_on:
+      - mongodb
+  # docker run -p 8080:8080 --net mongo-net -e spring.data.mongodb.host=mongodb -d todo-api:1.0.2
+  todo-api:
+    image: 679101335994.dkr.ecr.us-east-1.amazonaws.com/todo-api:1.0.2
+    container_name: todo-api
+    ports: 
+      - 8080:8080
+    environment:
+      - spring.data.mongodb.host=mongodb
+    networks:
+      - mongo-net
+      - frontend
+    depends_on:
+      - mongodb
+  # docker run -p 3000:3000 -d todo-ui:1.0.2
+  todo-ui:
+    # docker build -f Dockerfile.prod -t todo-ui:1.0.2 .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: todo-ui:1.0.2
+    container_name: todo-ui
+    ports:
+      - 3000:80
+    networks:
+      - frontend
+    depends_on:
+      - mongodb
+      - todo-api
+volumes:
+  # docker volume create mongo-data
+  mongo-data:
+    name: mongo-data
+networks:
+  # docker network create mongo-net
+  mongo-net:
+    name: mongo-net
+  frontend:
+    name: frontend
