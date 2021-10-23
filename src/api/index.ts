@@ -1,7 +1,11 @@
 import axios from 'axios';
 import Todo from '../types/Todo';
 
-const baseURL = `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/todos`;
+declare global {
+  interface Window { _env_: any; }
+}
+
+const baseURL = `${window._env_.REACT_APP_BACKEND_SERVER_URL}/api/todos`;
 
 export default {
   async add(title: string) {
